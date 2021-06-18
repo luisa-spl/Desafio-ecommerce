@@ -1,11 +1,12 @@
 import { useState } from 'react';
 
 export default function useProviderAuth() {
-    const [token, setToken] = useState("user");
+    const [token, setToken] = useState("");
     const [dadosUser, setDadosUser] = useState(null);
 
-    const logar = (callback) => {
-        setToken("user");
+    const logar = (dadosToken, callback) => {
+        setToken(dadosToken.token);
+        setDadosUser(dadosToken.usuario);
         callback();
       };
     

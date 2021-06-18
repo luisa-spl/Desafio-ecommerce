@@ -3,7 +3,9 @@ import {NavLink, useHistory} from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import TextField from '@material-ui/core/TextField';
 import Button from '@material-ui/core/Button';
+import FormControl from '@material-ui/core/FormControl';
 import IconButton from '@material-ui/core/IconButton';
+import Typography from '@material-ui/core/Typography';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import Alert from '@material-ui/lab/Alert';
 import Input from '@material-ui/core/Input';
@@ -31,29 +33,25 @@ function Login () {
     async function onSubmit(data) {
         setErro("");
         setCarregando(true);
-
-        console.log(data);
         
         try {
+
            const resposta = await fetch('http://localhost:3000/login', {
                 method: 'POST',
-                mode: 'no-cors',
                 body: JSON.stringify(data),
                 headers: {
-                    'Accept': 'application/json',
+                    "Access-Control-Allow-Origin": "*",
+                    "Access-Control-Allow-Headers": "*",
                     'Content-Type': 'application/json'   
                 }
             });
            
-            const { dados, erro } = await resposta.json();
+            const  dados = await resposta.json();
+
             setCarregando(false);
-            setErro(erro);
-
-            auth.setDadosUser(dados.usuario);
-            auth.setToken(dados.token);
-
+           
             if(resposta.status === 200) {
-                auth.logar(() => history.push('/produtos'));
+                auth.logar(dados, () => history.push('/produtos'));
             } else{
                 setErro(dados.erro);
                 return;
@@ -69,25 +67,27 @@ function Login () {
     return (
         <div className='content'>
             <div className='card'>
-                <form autoComplete='off' noValidate className='form' onSubmit={handleSubmit(onSubmit)}>
-                   
-                   <h2>Login</h2>
-                    <TextField  label="E-mail" {...register('email', {required:true})} type='email'/> 
-                    <InputLabel htmlFor="senha">Senha</InputLabel>
-                    <Input
-                        type={showPassword ? 'text' : 'password'}
-                        endAdornment={
-                            <InputAdornment position="end">
-                                <IconButton
-                                aria-label="toggle password visibility"
-                                onClick={handleClickShowPassword}
-                                >
-                                {showPassword ? <Visibility /> : <VisibilityOff />}
-                                </IconButton>
-                            </InputAdornment>
-                        }
-                        {...register('senha', {required:true})}
-                    />  
+                <form autoComplete='off' noValidate className='form' onSubmit={handleSubmit(onSubmit)}> 
+                   <Typography variant="h4">Login</Typography>
+                    <TextField  label="E-mail" {...register('email', {required:true})} type='email'/>
+
+                    <FormControl>
+                        <InputLabel htmlFor="senha">Senha</InputLabel>
+                        <Input
+                            type={showPassword ? 'text' : 'password'}
+                            endAdornment={
+                                <InputAdornment position="end">
+                                    <IconButton
+                                    aria-label="toggle password visibility"
+                                    onClick={handleClickShowPassword}
+                                    >
+                                    {showPassword ? <Visibility /> : <VisibilityOff />}
+                                    </IconButton>
+                                </InputAdornment>
+                            }
+                            {...register('senha', {required:true})}
+                        />  
+                    </FormControl> 
                     <Button variant="contained" color="primary" type='submit'>
                         Entrar
                     </Button>

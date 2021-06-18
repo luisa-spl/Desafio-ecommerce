@@ -2,11 +2,13 @@ const conexao = require('../conexao');
 const securePassword = require('secure-password');
 const jwt = require('jsonwebtoken');
 const jwtSecret = require('../jwt_secret');
+const editaUsuario = require('../utils/editarUsuario');
 
 const pwd = securePassword();
 
 const cadastrarUsuario = async (req, res) => {
     const { nome, email, nome_loja, senha  } = req.body;
+    
 
     if (!nome) {
         return res.status(400).json('O campo nome é obrigatório');
@@ -49,13 +51,16 @@ const cadastrarUsuario = async (req, res) => {
 };
 
 const mostrarUsuario = async (req, res) => {
-    const { token } = req.body;
-
-    if(!token) {
+    const { authorization } = req.headers;
+    
+    if(!authorization) {
         return res.status(400).json('O campo "token" é obrigatório');
     }
 
     try {
+        
+        const token = authorization.replace("Bearer", "").trim();
+
         const usuario = jwt.verify(token, jwtSecret);
 
         if(!usuario) {
@@ -80,40 +85,40 @@ const mostrarUsuario = async (req, res) => {
 }
 
 const editarUsuario = async (req, res) => {
-    const { nome, email, nome_loja, senha, token } = req.body;
-
-    if(!token) {
+    const { nome, email, nome_loja, senha } = req.body;
+    const { authorization } = req.headers;
+    
+    if(!authorization) {
         return res.status(400).json('O campo "token" é obrigatório');
     }
 
+    if(!nome && !nome_loja && !email && !senha) {
+        return res.status(400).json("Ao menos 1 campo deve ser preenchido");
+    }
+
     try {
+        
+        const token = authorization.replace("Bearer", "").trim();
+
         const resposta = jwt.verify(token, jwtSecret);
 
         if(!resposta) {
             return res.status(400).json("Token inválido");
         }
-    } 
-    catch (error) {
-        return res.status(400).json(error.message);
-    };
 
-    try {
         const usuario = await conexao.query('select * from usuarios where email = $1', [email]);
 
         if(usuario.rowCount > 0) {
             return res.status(400).json("O e-mail já está cadastrado");
         }
+
+        const usuarioAtualizado = await editaUsuario(nome, nome_loja, email, senha, resposta.id)
         
-    } catch (error) {
-        return res.status(400).json(error.message);
-    }    
-
-    try {
-        const resposta = jwt.verify(token, jwtSecret);
-
-        const usuarioAtualizado = await conexao.query('update usuarios set nome = $1, nome_loja = $2, email = $3, senha = $4 where id = $5', [nome, nome_loja, email, senha, resposta.id]);
-
-        return res.status(200).json("Cadastro atualizado");
+        if(usuarioAtualizado){
+            return res.status(400).json(usuarioAtualizado);
+        } 
+        
+        return res.status(200).json("Usuario editado com sucesso");
     }
     catch (error) {
         return res.status(400).json("Não foi possível atualizar");
@@ -122,9 +127,7 @@ const editarUsuario = async (req, res) => {
 
 const login = async (req, res) => {
     const { email, senha } = req.body;
-    console.log(email, senha);
     
-
     if (!email) {
         return res.status(400).json('O campo e-mail é obrigatório');
     }
@@ -132,7 +135,7 @@ const login = async (req, res) => {
     if (!senha) {
         return res.status(400).json('O campo senha é obrigatório');
     }
-    console.log("entrou aqui");
+
 
     try {
         const usuarios = await conexao.query('select * from usuarios where email = $1', [email]);
@@ -158,7 +161,7 @@ const login = async (req, res) => {
                     const hash = (await pwd.hash(Buffer.from(senha))).toString('hex');
                     await conexao.query('update usuarios set senha = $1 where email = $2', [hash, email]);
                 } catch (error) {
-                    console.log(error.message);
+                    return res.status(400).json(error.message);
                 }
                 break;
         }

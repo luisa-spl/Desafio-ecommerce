@@ -1,10 +1,18 @@
 const conexao = require('../conexao');
 const jwt = require('jsonwebtoken');
 const jwtSecret = require('../jwt_secret');
+const editaProduto = require('../utils/editarProduto');
 
 const cadastrarProduto = async (req, res) => {
-    const { nome, estoque, categoria, preco, descricao, imagem, token } = req.body;
+    const { nome, estoque, categoria, preco, descricao, imagem } = req.body;
+    const { authorization } = req.headers;
 
+    if(!authorization) {
+        return res.status(400).json('O campo "token" é obrigatório');
+    }
+
+    const token = authorization.replace("Bearer", "").trim();
+  
     if (!nome) {
         return res.status(400).json('O campo nome é obrigatório');
     }
@@ -47,14 +55,17 @@ const cadastrarProduto = async (req, res) => {
 };
 
 const listarProdutos = async (req, res) => {
-    const { token } = req.body;
+    const { authorization } = req.headers;
 
-    if(!token) {
+    if(!authorization) {
         return res.status(400).json('O campo "token" é obrigatório');
     }
 
+    const token = authorization.replace("Bearer", "").trim();
+
     try {
         const usuario = jwt.verify(token, jwtSecret);
+        
     
         if(!usuario) {
             return res.status(400).json("Token inválido");
@@ -72,8 +83,14 @@ const listarProdutos = async (req, res) => {
 };
 
 const mostrarProduto = async (req, res) => {
-    const { token } = req.body;
     const { id } = req.params;
+    const { authorization } = req.headers;
+
+    if(!authorization) {
+        return res.status(400).json('O campo "token" é obrigatório');
+    }
+
+    const token = authorization.replace("Bearer", "").trim();
 
     if(!token) {
         return res.status(400).json('O campo "token" é obrigatório');
@@ -109,11 +126,17 @@ const mostrarProduto = async (req, res) => {
 };
 
 const editarProduto = async (req, res) => {
-    const { nome, estoque, categoria, preco, descricao, imagem, token } = req.body;
+    const { nome, estoque, categoria, preco, descricao, imagem } = req.body;
     const { id } = req.params;
+    const { authorization } = req.headers;
 
-    //essas validações não tem que estar aqui, mas sim no cadastro. Aqui eu só preciso verificar quais campos foram informados
-    //pelo usuario e se ele informou ao menos 1 campo, certo?
+    if(!authorization) {
+        return res.status(400).json('O campo "token" é obrigatório');
+    }
+
+    const token = authorization.replace("Bearer", "").trim();
+
+   
     if(!token) {
         return res.status(400).json('O campo "token" é obrigatório');
     }
@@ -137,36 +160,33 @@ const editarProduto = async (req, res) => {
         }
 
     } catch (error) {
-        res.status(400).json(error.message);
+        return res.status(400).json(error.message);
     }
 
-    
-        const queryBase = 'update produtos set';
-        let cont = 1;
-        let array=[];
+    try {
+        const produtoEditado = await editaProduto(nome, estoque, categoria, preco, descricao, imagem, id);
         
-
-        if(nome){
-            queryBase=(`${queryBase} nome = $${cont}`);
-            array.push('nome');
-        }
+        if(produtoEditado){
+            return res.status(400).json(produtoEditado);
+        } 
         
-
-        //const produtoAtualizado = await conexao.query(`${queryBase}`) 
-        /*nome = $1, estoque = $2, categoria = $3, preco = $4, descricao = $5, imagem = $6 where id = $7', [nome, estoque, categoria, preco, descricao, imagem, id]);
-        */
+        return res.status(200).json("Produto editado com sucesso");
         
-      
-    /*    
-    } catch (error) {
-        return res.status(400).json("Não foi possível atualizar");
+    } catch(error) {
+        return res.status(400).json(error.message);
     }
-    */
 };
 
 const deletarProduto= async (req, res) => {
-    const { token } = req.body;
     const { id }  = req.params;
+    const { authorization } = req.headers;
+
+    if(!authorization) {
+        return res.status(400).json('O campo "token" é obrigatório');
+    }
+
+    const token = authorization.replace("Bearer", "").trim();
+    
 
     try {
         const resposta = jwt.verify(token, jwtSecret);

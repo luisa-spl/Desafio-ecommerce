@@ -1,0 +1,13 @@
+.container {
+    display: flex;
+    
+}
+
+.main {
+    display: flex;
+    flex-direction: column;
+    align-items: left;
+    margin-left: 6rem;
+    gap: 2rem;
+    margin-top: 4rem;
+}

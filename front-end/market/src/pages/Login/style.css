@@ -1,0 +1,29 @@
+.content {
+    display: flex;
+    justify-content: center;
+    height: 100vh;
+    background-color: #E5E5E5;
+}
+
+.card {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    margin-top: 100px;
+    width:350px;
+    height: 400px;
+    border-radius: 16px;
+    box-shadow:  0px 8px 9px -5px rgba(0, 0, 0, 0.2), 0px 15px 22px 2px rgba(0, 0, 0, 0.14), 0px 6px 28px 5px rgba(0, 0, 0, 0.12);
+    background-color: white;
+}
+
+.form{
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+button {
+    align-self: center;
+}
